@@ -1,5 +1,6 @@
 ﻿using InventoryService.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -50,14 +51,13 @@ namespace InventoryService.Controllers
                    };
 
                     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-
                     var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
                     var token = new JwtSecurityToken(
                         _configuration["Jwt:Issuer"],
                         _configuration["Jwt:Audience"],
                         claims,
-                        expires: DateTime.UtcNow.AddDays(1),
+                        expires: DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:Expire")),
                         signingCredentials: signIn);
 
                     var test = new JwtSecurityTokenHandler().WriteToken(token);
@@ -116,6 +116,19 @@ namespace InventoryService.Controllers
                         "X-Access-Token",
                         test                     
                     ) ;
+
+                    // using Microsoft.AspNetCore.Authentication;
+                    var claimsIdentity = new ClaimsIdentity(
+                        claims,
+                        CookieAuthenticationDefaults.AuthenticationScheme);
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(claimsIdentity),
+                        new AuthenticationProperties
+                        {
+                            IsPersistent = true,
+                            ExpiresUtc = DateTime.UtcNow.AddMinutes(20)
+                        });
 
                     return Ok();
                 }

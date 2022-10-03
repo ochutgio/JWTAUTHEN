@@ -1,6 +1,7 @@
 using InventoryService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -29,15 +30,13 @@ namespace InventoryService
             services.AddDbContextPool<InventoryContext>(options => options.UseSqlServer(connection));
             services.AddControllers();
 
-            services.AddAuthentication(
-                        i =>
-                        {
-                            i.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                            i.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                            i.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                            i.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-                        }
-                    )
+            services.AddAuthentication(i =>
+                    {
+                        i.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                        i.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                        i.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                        i.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
                     .AddJwtBearer(options =>
                     {
                         options.RequireHttpsMetadata = true;
@@ -65,6 +64,7 @@ namespace InventoryService
                     .AddCookie(options =>
                     {
                         options.Cookie.SameSite = SameSiteMode.Strict;
+                        options.Cookie.HttpOnly = true;
                         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                         options.Cookie.IsEssential = true;
                         options.Cookie.Expiration = System.TimeSpan.FromDays(Configuration.GetValue<int>("jwt:Expire"));
